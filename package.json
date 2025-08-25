@@ -1,0 +1,11 @@
+{
+  "name": "x-mall-node",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "shtao",
+  "license": "ISC",
+  "description": "mall shop node server"
+}
