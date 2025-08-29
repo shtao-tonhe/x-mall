@@ -1,0 +1,287 @@
+// 数据源配置（MySQL）
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+/// 用户等级表（定义会员体系，用于差异化服务和排队优先级）
+model UserLevel {
+  id          Int     @id @default(autoincrement()) /// 自增主键
+  name        String  /// 等级名称（如"普通用户"、"VIP会员"、"钻石会员"）
+  level       Int     @unique /// 等级数值（1-5，用于排序，数值越大等级越高）
+  description String? /// 等级权益描述（如"VIP会员可享受优先接入客服"）
+  priority    Int     /// 排队优先级（数值越小优先级越高，1为最高）
+  
+  // 关联关系
+  users       User[]  /// 该等级对应的所有用户
+  
+  @@map("x_chat_user_levels")
+}
+
+/// 平台主体配置表（多来源隔离核心，区分不同接入渠道）
+model Platform {
+  id              Int               @id @default(autoincrement()) /// 自增主键
+  name            String            /// 平台名称（如"官网PC端"、"移动端APP"、"微信小程序"）
+  source          String            /// 来源标识（用于代码中区分渠道，如"pc_official"、"app_consumer"）
+  identifier      String            @unique /// 平台唯一标识（用于API鉴权，如UUID）
+  privateKey      String            /// 数据加密私钥（用于平台间通信加密）
+  privateKeyExpire DateTime         /// 私钥到期时间（自动失效机制）
+  h5IframeUrl     String?           /// H5聚合页iframe链接（可选，用于跳转平台内页面）
+  status          Boolean           @default(true) /// 平台状态（true=启用，false=禁用）
+  createdAt       DateTime          @default(now()) @map("created_at") /// 创建时间
+  updatedAt       DateTime          @updatedAt @map("updated_at") /// 更新时间
+  
+  // 关联关系
+  sessions        Session[]         /// 该平台产生的所有会话
+  users           User[]            /// 该平台的所有用户
+  workOrders      WorkOrder[]       /// 该平台的所有工单
+  
+  @@map("x_chat_platforms")
+}
+
+/// 客服标签表（支持自定义标签类型，用于客服分类和权限控制）
+model AgentTag {
+  id          Int               @id @default(autoincrement()) /// 自增主键
+  name        String            /// 标签名称（如"工单客服"、"VIP专员"、"技术支持"）
+  type        String            /// 标签类型（用于分组，如"岗位类型"、"权限等级"、"服务范围"）
+  status      Boolean           @default(true) /// 标签状态（true=启用，false=禁用）
+  createdAt   DateTime          @default(now()) @map("created_at") /// 创建时间
+  
+  // 关联关系
+  agentRelations AgentTagRelation[] /// 关联的客服-标签关系记录
+  
+  @@map("x_chat_agent_tags")
+}
+
+/// 节假日表（管理全年节假日，用于客服排班和自动在线状态调整）
+model Holiday {
+  id          Int               @id @default(autoincrement()) /// 自增主键
+  name        String            /// 节假日名称（如"春节"、"国庆节"、"元旦"）
+  date        DateTime          /// 日期（仅保留年月日部分，如"2024-02-10"）
+  isAllDay    Boolean           @default(true) @map("is_all_day") /// 是否全天（true=全天，false=仅特定时段）
+  startTime   String?           @map("start_time") /// 开始时间（格式"HH:MM"，非全天时必填）
+  endTime     String?           @map("end_time") /// 结束时间（格式"HH:MM"，非全天时必填）
+  description String?           /// 描述（如"调休上班"、"放假3天"）
+  
+  @@unique([name, date]) /// 避免同一节日在同一天重复添加
+  @@map("x_chat_holidays")
+}
+
+/// 客服排班表（记录客服每日排班信息，用于定时脚本更新在线状态）
+model AgentSchedule {
+  id          Int               @id @default(autoincrement()) /// 自增主键
+  agentId     Int               @map("agent_id") /// 关联的客服ID
+  date        DateTime          /// 排班日期（仅保留年月日部分）
+  isWorking   Boolean           @default(true) @map("is_working") /// 是否上班（true=上班，false=休息）
+  workType    String            @default("regular") @map("work_type") /// 班次类型（regular=正常班，overtime=加班，leave=请假）
+  startTime   String?           @map("start_time") /// 上班时间（格式"HH:MM"，上班时必填）
+  endTime     String?           @map("end_time") /// 下班时间（格式"HH:MM"，上班时必填）
+  createdAt   DateTime          @default(now()) @map("created_at") /// 创建时间
+  updatedAt   DateTime          @updatedAt @map("updated_at") /// 更新时间
+  
+  // 关联关系
+  agent       Agent             @relation(fields: [agentId], references: [id], onDelete: Cascade) /// 关联的客服
+  
+  @@unique([agentId, date]) /// 同一客服同一天只能有一条排班记录
+  @@map("x_chat_agent_schedules")
+}
+
+/// 客服表（存储客服人员信息和工作状态）
+model Agent {
+  id              Int               @id @default(autoincrement()) /// 自增主键
+  username        String            @unique /// 登录账号（唯一，用于系统登录）
+  name            String            /// 真实姓名（用于展示给客户）
+  onlineTimeStart String            /// 常规在线开始时间（格式"HH:MM"，如"09:00"）
+  onlineTimeEnd   String            /// 常规在线结束时间（格式"HH:MM"，如"21:00"）
+  activeDuration  Int?              /// 今日活跃时长（分钟，实时更新）
+  dispatchConfig  Json?             /// 派单配置（JSON格式，如{"maxSession":5,"acceptTypes":["chat","ticket"]}）
+  status          String            @default("offline") /// 在线状态（online=在线，offline=离线，busy=忙碌）
+  createdAt       DateTime          @default(now()) @map("created_at") /// 创建时间
+  updatedAt       DateTime          @updatedAt @map("updated_at") /// 更新时间
+  
+  // 关联关系
+  tags            AgentTagRelation[] /// 关联的标签（多对多）
+  sessions        Session[]         /// 处理的所有会话
+  workOrders      WorkOrder[]       /// 处理的所有工单
+  messages        SessionMessage[]  @relation("AgentMessages") /// 发送的所有消息
+  schedules       AgentSchedule[]   /// 所有排班记录
+  
+  @@map("x_chat_agents")
+}
+
+/// 客服-标签关联表（多对多关系中间表）
+model AgentTagRelation {
+  agentId    Int               @map("agent_id") /// 客服ID
+  tagId      Int               @map("tag_id") /// 标签ID
+  createdAt  DateTime          @default(now()) @map("created_at") /// 关联创建时间
+  
+  // 关联关系
+  agent      Agent             @relation(fields: [agentId], references: [id], onDelete: Cascade) /// 关联的客服
+  tag        AgentTag          @relation(fields: [tagId], references: [id], onDelete: Cascade) /// 关联的标签
+  
+  @@id([agentId, tagId]) /// 复合主键（客服ID+标签ID）
+  @@map("x_chat_agent_tag_relations")
+}
+
+/// 用户表（咨询客户信息）
+model User {
+  id            Int               @id @default(autoincrement()) /// 自增主键
+  platformId    Int               @map("platform_id") /// 所属平台ID
+  levelId       Int               @default(1) @map("level_id") /// 用户等级ID（默认1=普通用户）
+  ip            String            /// 登录IP地址（用于地域分析）
+  language      String            /// 语言偏好（如"zh-CN"=简体中文，"en"=英文）
+  device        String            /// 设备信息（如"pc/windows"、"mobile/ios/16.0"）
+  userId        String?           @unique /// 客户在原系统的ID（如APP用户ID，可选）
+  avatar        String?           /// 头像URL（可选）
+  createdAt     DateTime          @default(now()) @map("created_at") /// 创建时间
+  updatedAt     DateTime          @updatedAt @map("updated_at") /// 更新时间
+  
+  // 关联关系
+  platform      Platform          @relation(fields: [platformId], references: [id]) /// 所属平台
+  level         UserLevel         @relation(fields: [levelId], references: [id]) /// 所属等级
+  sessions      Session[]         /// 发起的所有会话
+  workOrders    WorkOrder[]       /// 发起的所有工单
+  messages      SessionMessage[]  @relation("UserMessages") /// 发送的所有消息
+  
+  @@index([platformId, userId]) /// 联合索引（平台ID+原系统用户ID），用于快速查询特定平台的用户
+  @@map("x_chat_users")
+}
+
+/// 会话表（存储客户与客服的聊天会话元数据）
+model Session {
+  id            Int               @id @default(autoincrement()) /// 自增主键
+  platformId    Int               @map("platform_id") /// 所属平台ID
+  userId        Int               @map("user_id") /// 发起会话的用户ID
+  agentId       Int?              @map("agent_id") /// 处理会话的客服ID（未分配时为null）
+  status        String            /// 会话状态（pending=待分配，active=进行中，ended=已结束）
+  title         String?           /// 会话标题（自动提取首条消息或手动输入）
+  startTime     DateTime          @default(now()) @map("start_time") /// 会话开始时间
+  endTime       DateTime?         @map("end_time") /// 会话结束时间（结束后更新）
+  duration      Int?              /// 会话时长（秒，结束后计算）
+  ip            String            /// 发起IP地址
+  language      String            /// 会话语言（继承用户language字段）
+  detailId      String?           @unique @map("detail_id") /// 会话详情唯一标识（用于前端关联）
+  
+  // 关联关系
+  platform      Platform          @relation(fields: [platformId], references: [id]) /// 所属平台
+  user          User              @relation(fields: [userId], references: [id]) /// 发起会话的用户
+  agent         Agent?            @relation(fields: [agentId], references: [id]) /// 处理会话的客服
+  messages      SessionMessage[]  /// 会话中的所有消息
+  
+  @@index([status, agentId]) /// 索引：按状态+客服ID查询（用于筛选客服的待处理/进行中会话）
+  @@index([platformId, startTime]) /// 索引：按平台+开始时间查询（用于统计分析）
+  @@map("x_chat_sessions")
+}
+
+/// 会话详情表（聊天消息内容）
+model SessionMessage {
+  id            Int               @id @default(autoincrement()) /// 自增主键
+  sessionId     Int               @map("session_id") /// 所属会话ID
+  senderType    String            /// 发送者类型（user=客户，agent=客服）
+  senderId      Int               @map("sender_id") /// 发送者ID（对应user.id或agent.id）
+  content       String?           /// 消息内容（文本/emoji，附件消息可为空）
+  contentType   String            @default("text") /// 内容类型（text=文本，image=图片，video=视频，file=文件，emoji=表情）
+  timestamp     DateTime          @default(now()) /// 发送时间
+  
+  // 关联关系
+  session       Session           @relation(fields: [sessionId], references: [id], onDelete: Cascade) /// 所属会话
+  attachments   MessageAttachment[] /// 消息的所有附件
+  agent         Agent?            @relation("AgentMessages", fields: [senderId], references: [id], map: "x_chat_session_messages_agent_fkey") /// 发送消息的客服（senderType=agent时有效）
+  user          User?             @relation("UserMessages", fields: [senderId], references: [id], map: "x_chat_session_messages_user_fkey") /// 发送消息的客户（senderType=user时有效）
+  
+  @@index([sessionId, timestamp]) /// 索引：按会话ID+时间排序（用于加载聊天记录）
+  @@map("x_chat_session_messages")
+}
+
+/// 消息附件表（存储聊天消息中的附件，支持图片/视频/文件等）
+model MessageAttachment {
+  id            Int               @id @default(autoincrement()) /// 自增主键
+  messageId     Int               @map("message_id") /// 关联的消息ID
+  fileName      String            @map("file_name") /// 原始文件名（如"截图20240101.png"）
+  fileType      String            @map("file_type") /// MIME类型（如image/jpeg、video/mp4、application/zip）
+  fileSize      Int               @map("file_size") /// 文件大小（字节）
+  fileUrl       String            @map("file_url") /// 存储URL（云存储地址，如OSS/COS链接）
+  thumbnailUrl  String?           @map("thumbnail_url") /// 缩略图URL（仅图片/视频有，可选）
+  uploadTime    DateTime          @default(now()) @map("upload_time") /// 上传时间
+  
+  // 关联关系
+  message       SessionMessage    @relation(fields: [messageId], references: [id], onDelete: Cascade, map: "x_chat_message_attachments_message_id_fkey") /// 关联的消息
+  
+  @@map("x_chat_message_attachments")
+}
+
+/// 工单表（客户提交的问题工单，用于非实时问题处理）
+model WorkOrder {
+  id            Int               @id @default(autoincrement()) /// 自增主键
+  platformId    Int               @map("platform_id") /// 所属平台ID
+  userId        Int               @map("user_id") /// 提交工单的用户ID
+  agentId       Int?              @map("agent_id") /// 处理工单的客服ID（未分配时为null）
+  status        String            /// 工单状态（pending=待处理，processing=处理中，closed=已关闭）
+  title         String            /// 工单标题（简洁描述问题）
+  description   String            /// 问题详细描述
+  createTime    DateTime          @default(now()) @map("create_time") /// 创建时间
+  updateTime    DateTime          @updatedAt @map("update_time") /// 更新时间
+  closeTime     DateTime?         @map("close_time") /// 关闭时间（关闭后更新）
+  
+  // 关联关系
+  platform      Platform          @relation(fields: [platformId], references: [id]) /// 所属平台
+  user          User              @relation(fields: [userId], references: [id]) /// 提交工单的用户
+  agent         Agent?            @relation(fields: [agentId], references: [id]) /// 处理工单的客服
+  replies       WorkOrderReply[]  /// 工单的所有回复
+  attachments   WorkOrderAttachment[] /// 工单的所有附件
+  
+  @@index([status, agentId]) /// 索引：按状态+客服ID查询（用于筛选客服的待处理工单）
+  @@map("x_chat_work_orders")
+}
+
+/// 工单附件表（存储工单提交时的附件）
+model WorkOrderAttachment {
+  id            Int               @id @default(autoincrement()) /// 自增主键
+  workOrderId   Int               @map("work_order_id") /// 关联的工单ID
+  fileName      String            @map("file_name") /// 原始文件名
+  fileType      String            @map("file_type") /// MIME类型
+  fileSize      Int               @map("file_size") /// 文件大小（字节）
+  fileUrl       String            @map("file_url") /// 存储URL
+  uploadTime    DateTime          @default(now()) @map("upload_time") /// 上传时间
+  
+  // 关联关系
+  workOrder     WorkOrder         @relation(fields: [workOrderId], references: [id], onDelete: Cascade, map: "x_chat_work_order_attachments_order_id_fkey") /// 关联的工单
+  
+  @@map("x_chat_work_order_attachments")
+}
+
+/// 工单回复表（存储工单的回复内容）
+model WorkOrderReply {
+  id            Int               @id @default(autoincrement()) /// 自增主键
+  workOrderId   Int               @map("work_order_id") /// 关联的工单ID
+  senderType    String            /// 回复者类型（user=客户，agent=客服）
+  senderId      Int               @map("sender_id") /// 回复者ID
+  content       String            /// 回复内容
+  replyTime     DateTime          @default(now()) @map("reply_time") /// 回复时间
+  
+  // 关联关系
+  workOrder     WorkOrder         @relation(fields: [workOrderId], references: [id], onDelete: Cascade, map: "x_chat_work_order_replies_order_id_fkey") /// 关联的工单
+  attachments   WorkOrderReplyAttachment[] /// 回复的所有附件
+  
+  @@map("x_chat_work_order_replies")
+}
+
+/// 工单回复附件表（存储工单回复时的附件）
+model WorkOrderReplyAttachment {
+  id            Int               @id @default(autoincrement()) /// 自增主键
+  replyId       Int               @map("reply_id") /// 关联的回复ID
+  fileName      String            @map("file_name") /// 原始文件名
+  fileType      String            @map("file_type") /// MIME类型
+  fileSize      Int               @map("file_size") /// 文件大小（字节）
+  fileUrl       String            @map("file_url") /// 存储URL
+  uploadTime    DateTime          @default(now()) @map("upload_time") /// 上传时间
+  
+  // 关联关系
+  reply         WorkOrderReply    @relation(fields: [replyId], references: [id], onDelete: Cascade, map: "x_chat_work_order_reply_attachments_reply_id_fkey") /// 关联的回复
+  
+  @@map("x_chat_work_order_reply_attachments")
+}

@@ -1,11 +1,34 @@
 {
-  "name": "x-mall-node",
+  "name": "x-customer-chat-service",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "",
+  "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "migrate:dev": "dotenv -e.env.development -- npx prisma migrate dev",
+    "migrate:test": "dotenv -e.env.test -- npx prisma migrate dev",
+    "migrate:prod": "dotenv -e.env.production -- npx prisma migrate deploy",
+    "dev": "npx prisma generate && node src/app.js",
+    "start": "npx prisma generate && node src/app.js"
   },
   "author": "shtao",
   "license": "ISC",
-  "description": "mall shop node server"
+  "dependencies": {
+    "@prisma/client": "^6.14.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.0.1",
+    "joi": "^18.0.1",
+    "morgan": "^1.10.1",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "@prisma/cli-init": "^0.4.1",
+    "prisma": "^6.14.0"
+  }
 }
