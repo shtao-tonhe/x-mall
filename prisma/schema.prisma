@@ -1,287 +1,1050 @@
-// 数据源配置（MySQL）
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model cms_help {
+  id          BigInt    @id @default(autoincrement())
+  category_id BigInt?
+  icon        String?   @db.VarChar(500)
+  title       String?   @db.VarChar(100)
+  show_status Int?
+  create_time DateTime? @db.DateTime(0)
+  read_count  Int?
+  content     String?   @db.Text
 }
 
-/// 用户等级表（定义会员体系，用于差异化服务和排队优先级）
-model UserLevel {
-  id          Int     @id @default(autoincrement()) /// 自增主键
-  name        String  /// 等级名称（如"普通用户"、"VIP会员"、"钻石会员"）
-  level       Int     @unique /// 等级数值（1-5，用于排序，数值越大等级越高）
-  description String? /// 等级权益描述（如"VIP会员可享受优先接入客服"）
-  priority    Int     /// 排队优先级（数值越小优先级越高，1为最高）
-  
-  // 关联关系
-  users       User[]  /// 该等级对应的所有用户
-  
-  @@map("x_chat_user_levels")
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model cms_help_category {
+  id          BigInt  @id @default(autoincrement())
+  name        String? @db.VarChar(100)
+  icon        String? @db.VarChar(500)
+  help_count  Int?
+  show_status Int?
+  sort        Int?
 }
 
-/// 平台主体配置表（多来源隔离核心，区分不同接入渠道）
-model Platform {
-  id              Int               @id @default(autoincrement()) /// 自增主键
-  name            String            /// 平台名称（如"官网PC端"、"移动端APP"、"微信小程序"）
-  source          String            /// 来源标识（用于代码中区分渠道，如"pc_official"、"app_consumer"）
-  identifier      String            @unique /// 平台唯一标识（用于API鉴权，如UUID）
-  privateKey      String            /// 数据加密私钥（用于平台间通信加密）
-  privateKeyExpire DateTime         /// 私钥到期时间（自动失效机制）
-  h5IframeUrl     String?           /// H5聚合页iframe链接（可选，用于跳转平台内页面）
-  status          Boolean           @default(true) /// 平台状态（true=启用，false=禁用）
-  createdAt       DateTime          @default(now()) @map("created_at") /// 创建时间
-  updatedAt       DateTime          @updatedAt @map("updated_at") /// 更新时间
-  
-  // 关联关系
-  sessions        Session[]         /// 该平台产生的所有会话
-  users           User[]            /// 该平台的所有用户
-  workOrders      WorkOrder[]       /// 该平台的所有工单
-  
-  @@map("x_chat_platforms")
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model cms_member_report {
+  id                 BigInt?
+  report_type        Int?
+  report_member_name String?   @db.VarChar(100)
+  create_time        DateTime? @db.DateTime(0)
+  report_object      String?   @db.VarChar(100)
+  report_status      Int?
+  handle_status      Int?
+  note               String?   @db.VarChar(200)
+
+  @@ignore
 }
 
-/// 客服标签表（支持自定义标签类型，用于客服分类和权限控制）
-model AgentTag {
-  id          Int               @id @default(autoincrement()) /// 自增主键
-  name        String            /// 标签名称（如"工单客服"、"VIP专员"、"技术支持"）
-  type        String            /// 标签类型（用于分组，如"岗位类型"、"权限等级"、"服务范围"）
-  status      Boolean           @default(true) /// 标签状态（true=启用，false=禁用）
-  createdAt   DateTime          @default(now()) @map("created_at") /// 创建时间
-  
-  // 关联关系
-  agentRelations AgentTagRelation[] /// 关联的客服-标签关系记录
-  
-  @@map("x_chat_agent_tags")
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model cms_prefrence_area {
+  id          BigInt  @id @default(autoincrement())
+  name        String? @db.VarChar(255)
+  sub_title   String? @db.VarChar(255)
+  pic         Bytes?  @db.VarBinary(500)
+  sort        Int?
+  show_status Int?
 }
 
-/// 节假日表（管理全年节假日，用于客服排班和自动在线状态调整）
-model Holiday {
-  id          Int               @id @default(autoincrement()) /// 自增主键
-  name        String            /// 节假日名称（如"春节"、"国庆节"、"元旦"）
-  date        DateTime          /// 日期（仅保留年月日部分，如"2024-02-10"）
-  isAllDay    Boolean           @default(true) @map("is_all_day") /// 是否全天（true=全天，false=仅特定时段）
-  startTime   String?           @map("start_time") /// 开始时间（格式"HH:MM"，非全天时必填）
-  endTime     String?           @map("end_time") /// 结束时间（格式"HH:MM"，非全天时必填）
-  description String?           /// 描述（如"调休上班"、"放假3天"）
-  
-  @@unique([name, date]) /// 避免同一节日在同一天重复添加
-  @@map("x_chat_holidays")
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model cms_prefrence_area_product_relation {
+  id                BigInt  @id @default(autoincrement())
+  prefrence_area_id BigInt?
+  product_id        BigInt?
 }
 
-/// 客服排班表（记录客服每日排班信息，用于定时脚本更新在线状态）
-model AgentSchedule {
-  id          Int               @id @default(autoincrement()) /// 自增主键
-  agentId     Int               @map("agent_id") /// 关联的客服ID
-  date        DateTime          /// 排班日期（仅保留年月日部分）
-  isWorking   Boolean           @default(true) @map("is_working") /// 是否上班（true=上班，false=休息）
-  workType    String            @default("regular") @map("work_type") /// 班次类型（regular=正常班，overtime=加班，leave=请假）
-  startTime   String?           @map("start_time") /// 上班时间（格式"HH:MM"，上班时必填）
-  endTime     String?           @map("end_time") /// 下班时间（格式"HH:MM"，上班时必填）
-  createdAt   DateTime          @default(now()) @map("created_at") /// 创建时间
-  updatedAt   DateTime          @updatedAt @map("updated_at") /// 更新时间
-  
-  // 关联关系
-  agent       Agent             @relation(fields: [agentId], references: [id], onDelete: Cascade) /// 关联的客服
-  
-  @@unique([agentId, date]) /// 同一客服同一天只能有一条排班记录
-  @@map("x_chat_agent_schedules")
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model cms_subject {
+  id               BigInt    @id @default(autoincrement())
+  category_id      BigInt?
+  title            String?   @db.VarChar(100)
+  pic              String?   @db.VarChar(500)
+  product_count    Int?
+  recommend_status Int?
+  create_time      DateTime? @db.DateTime(0)
+  collect_count    Int?
+  read_count       Int?
+  comment_count    Int?
+  album_pics       String?   @db.VarChar(1000)
+  description      String?   @db.VarChar(1000)
+  show_status      Int?
+  content          String?   @db.Text
+  forward_count    Int?
+  category_name    String?   @db.VarChar(200)
 }
 
-/// 客服表（存储客服人员信息和工作状态）
-model Agent {
-  id              Int               @id @default(autoincrement()) /// 自增主键
-  username        String            @unique /// 登录账号（唯一，用于系统登录）
-  name            String            /// 真实姓名（用于展示给客户）
-  onlineTimeStart String            /// 常规在线开始时间（格式"HH:MM"，如"09:00"）
-  onlineTimeEnd   String            /// 常规在线结束时间（格式"HH:MM"，如"21:00"）
-  activeDuration  Int?              /// 今日活跃时长（分钟，实时更新）
-  dispatchConfig  Json?             /// 派单配置（JSON格式，如{"maxSession":5,"acceptTypes":["chat","ticket"]}）
-  status          String            @default("offline") /// 在线状态（online=在线，offline=离线，busy=忙碌）
-  createdAt       DateTime          @default(now()) @map("created_at") /// 创建时间
-  updatedAt       DateTime          @updatedAt @map("updated_at") /// 更新时间
-  
-  // 关联关系
-  tags            AgentTagRelation[] /// 关联的标签（多对多）
-  sessions        Session[]         /// 处理的所有会话
-  workOrders      WorkOrder[]       /// 处理的所有工单
-  messages        SessionMessage[]  @relation("AgentMessages") /// 发送的所有消息
-  schedules       AgentSchedule[]   /// 所有排班记录
-  
-  @@map("x_chat_agents")
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model cms_subject_category {
+  id            BigInt  @id @default(autoincrement())
+  name          String? @db.VarChar(100)
+  icon          String? @db.VarChar(500)
+  subject_count Int?
+  show_status   Int?
+  sort          Int?
 }
 
-/// 客服-标签关联表（多对多关系中间表）
-model AgentTagRelation {
-  agentId    Int               @map("agent_id") /// 客服ID
-  tagId      Int               @map("tag_id") /// 标签ID
-  createdAt  DateTime          @default(now()) @map("created_at") /// 关联创建时间
-  
-  // 关联关系
-  agent      Agent             @relation(fields: [agentId], references: [id], onDelete: Cascade) /// 关联的客服
-  tag        AgentTag          @relation(fields: [tagId], references: [id], onDelete: Cascade) /// 关联的标签
-  
-  @@id([agentId, tagId]) /// 复合主键（客服ID+标签ID）
-  @@map("x_chat_agent_tag_relations")
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model cms_subject_comment {
+  id               BigInt    @id @default(autoincrement())
+  subject_id       BigInt?
+  member_nick_name String?   @db.VarChar(255)
+  member_icon      String?   @db.VarChar(255)
+  content          String?   @db.VarChar(1000)
+  create_time      DateTime? @db.DateTime(0)
+  show_status      Int?
 }
 
-/// 用户表（咨询客户信息）
-model User {
-  id            Int               @id @default(autoincrement()) /// 自增主键
-  platformId    Int               @map("platform_id") /// 所属平台ID
-  levelId       Int               @default(1) @map("level_id") /// 用户等级ID（默认1=普通用户）
-  ip            String            /// 登录IP地址（用于地域分析）
-  language      String            /// 语言偏好（如"zh-CN"=简体中文，"en"=英文）
-  device        String            /// 设备信息（如"pc/windows"、"mobile/ios/16.0"）
-  userId        String?           @unique /// 客户在原系统的ID（如APP用户ID，可选）
-  avatar        String?           /// 头像URL（可选）
-  createdAt     DateTime          @default(now()) @map("created_at") /// 创建时间
-  updatedAt     DateTime          @updatedAt @map("updated_at") /// 更新时间
-  
-  // 关联关系
-  platform      Platform          @relation(fields: [platformId], references: [id]) /// 所属平台
-  level         UserLevel         @relation(fields: [levelId], references: [id]) /// 所属等级
-  sessions      Session[]         /// 发起的所有会话
-  workOrders    WorkOrder[]       /// 发起的所有工单
-  messages      SessionMessage[]  @relation("UserMessages") /// 发送的所有消息
-  
-  @@index([platformId, userId]) /// 联合索引（平台ID+原系统用户ID），用于快速查询特定平台的用户
-  @@map("x_chat_users")
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model cms_subject_product_relation {
+  id         BigInt  @id @default(autoincrement())
+  subject_id BigInt?
+  product_id BigInt?
 }
 
-/// 会话表（存储客户与客服的聊天会话元数据）
-model Session {
-  id            Int               @id @default(autoincrement()) /// 自增主键
-  platformId    Int               @map("platform_id") /// 所属平台ID
-  userId        Int               @map("user_id") /// 发起会话的用户ID
-  agentId       Int?              @map("agent_id") /// 处理会话的客服ID（未分配时为null）
-  status        String            /// 会话状态（pending=待分配，active=进行中，ended=已结束）
-  title         String?           /// 会话标题（自动提取首条消息或手动输入）
-  startTime     DateTime          @default(now()) @map("start_time") /// 会话开始时间
-  endTime       DateTime?         @map("end_time") /// 会话结束时间（结束后更新）
-  duration      Int?              /// 会话时长（秒，结束后计算）
-  ip            String            /// 发起IP地址
-  language      String            /// 会话语言（继承用户language字段）
-  detailId      String?           @unique @map("detail_id") /// 会话详情唯一标识（用于前端关联）
-  
-  // 关联关系
-  platform      Platform          @relation(fields: [platformId], references: [id]) /// 所属平台
-  user          User              @relation(fields: [userId], references: [id]) /// 发起会话的用户
-  agent         Agent?            @relation(fields: [agentId], references: [id]) /// 处理会话的客服
-  messages      SessionMessage[]  /// 会话中的所有消息
-  
-  @@index([status, agentId]) /// 索引：按状态+客服ID查询（用于筛选客服的待处理/进行中会话）
-  @@index([platformId, startTime]) /// 索引：按平台+开始时间查询（用于统计分析）
-  @@map("x_chat_sessions")
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model cms_topic {
+  id              BigInt    @id @default(autoincrement())
+  category_id     BigInt?
+  name            String?   @db.VarChar(255)
+  create_time     DateTime? @db.DateTime(0)
+  start_time      DateTime? @db.DateTime(0)
+  end_time        DateTime? @db.DateTime(0)
+  attend_count    Int?
+  attention_count Int?
+  read_count      Int?
+  award_name      String?   @db.VarChar(100)
+  attend_type     String?   @db.VarChar(100)
+  content         String?   @db.Text
 }
 
-/// 会话详情表（聊天消息内容）
-model SessionMessage {
-  id            Int               @id @default(autoincrement()) /// 自增主键
-  sessionId     Int               @map("session_id") /// 所属会话ID
-  senderType    String            /// 发送者类型（user=客户，agent=客服）
-  senderId      Int               @map("sender_id") /// 发送者ID（对应user.id或agent.id）
-  content       String?           /// 消息内容（文本/emoji，附件消息可为空）
-  contentType   String            @default("text") /// 内容类型（text=文本，image=图片，video=视频，file=文件，emoji=表情）
-  timestamp     DateTime          @default(now()) /// 发送时间
-  
-  // 关联关系
-  session       Session           @relation(fields: [sessionId], references: [id], onDelete: Cascade) /// 所属会话
-  attachments   MessageAttachment[] /// 消息的所有附件
-  agent         Agent?            @relation("AgentMessages", fields: [senderId], references: [id], map: "x_chat_session_messages_agent_fkey") /// 发送消息的客服（senderType=agent时有效）
-  user          User?             @relation("UserMessages", fields: [senderId], references: [id], map: "x_chat_session_messages_user_fkey") /// 发送消息的客户（senderType=user时有效）
-  
-  @@index([sessionId, timestamp]) /// 索引：按会话ID+时间排序（用于加载聊天记录）
-  @@map("x_chat_session_messages")
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model cms_topic_category {
+  id            BigInt  @id @default(autoincrement())
+  name          String? @db.VarChar(100)
+  icon          String? @db.VarChar(500)
+  subject_count Int?
+  show_status   Int?
+  sort          Int?
 }
 
-/// 消息附件表（存储聊天消息中的附件，支持图片/视频/文件等）
-model MessageAttachment {
-  id            Int               @id @default(autoincrement()) /// 自增主键
-  messageId     Int               @map("message_id") /// 关联的消息ID
-  fileName      String            @map("file_name") /// 原始文件名（如"截图20240101.png"）
-  fileType      String            @map("file_type") /// MIME类型（如image/jpeg、video/mp4、application/zip）
-  fileSize      Int               @map("file_size") /// 文件大小（字节）
-  fileUrl       String            @map("file_url") /// 存储URL（云存储地址，如OSS/COS链接）
-  thumbnailUrl  String?           @map("thumbnail_url") /// 缩略图URL（仅图片/视频有，可选）
-  uploadTime    DateTime          @default(now()) @map("upload_time") /// 上传时间
-  
-  // 关联关系
-  message       SessionMessage    @relation(fields: [messageId], references: [id], onDelete: Cascade, map: "x_chat_message_attachments_message_id_fkey") /// 关联的消息
-  
-  @@map("x_chat_message_attachments")
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model cms_topic_comment {
+  id               BigInt    @id @default(autoincrement())
+  member_nick_name String?   @db.VarChar(255)
+  topic_id         BigInt?
+  member_icon      String?   @db.VarChar(255)
+  content          String?   @db.VarChar(1000)
+  create_time      DateTime? @db.DateTime(0)
+  show_status      Int?
 }
 
-/// 工单表（客户提交的问题工单，用于非实时问题处理）
-model WorkOrder {
-  id            Int               @id @default(autoincrement()) /// 自增主键
-  platformId    Int               @map("platform_id") /// 所属平台ID
-  userId        Int               @map("user_id") /// 提交工单的用户ID
-  agentId       Int?              @map("agent_id") /// 处理工单的客服ID（未分配时为null）
-  status        String            /// 工单状态（pending=待处理，processing=处理中，closed=已关闭）
-  title         String            /// 工单标题（简洁描述问题）
-  description   String            /// 问题详细描述
-  createTime    DateTime          @default(now()) @map("create_time") /// 创建时间
-  updateTime    DateTime          @updatedAt @map("update_time") /// 更新时间
-  closeTime     DateTime?         @map("close_time") /// 关闭时间（关闭后更新）
-  
-  // 关联关系
-  platform      Platform          @relation(fields: [platformId], references: [id]) /// 所属平台
-  user          User              @relation(fields: [userId], references: [id]) /// 提交工单的用户
-  agent         Agent?            @relation(fields: [agentId], references: [id]) /// 处理工单的客服
-  replies       WorkOrderReply[]  /// 工单的所有回复
-  attachments   WorkOrderAttachment[] /// 工单的所有附件
-  
-  @@index([status, agentId]) /// 索引：按状态+客服ID查询（用于筛选客服的待处理工单）
-  @@map("x_chat_work_orders")
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model oms_cart_item {
+  id                  BigInt    @id @default(autoincrement())
+  product_id          BigInt?
+  product_sku_id      BigInt?
+  member_id           BigInt?
+  quantity            Int?
+  price               Decimal?  @db.Decimal(10, 2)
+  product_pic         String?   @db.VarChar(1000)
+  product_name        String?   @db.VarChar(500)
+  product_sub_title   String?   @db.VarChar(500)
+  product_sku_code    String?   @db.VarChar(200)
+  member_nickname     String?   @db.VarChar(500)
+  create_date         DateTime? @db.DateTime(0)
+  modify_date         DateTime? @db.DateTime(0)
+  delete_status       Int?      @default(0)
+  product_category_id BigInt?
+  product_brand       String?   @db.VarChar(200)
+  product_sn          String?   @db.VarChar(200)
+  product_attr        String?   @db.VarChar(500)
 }
 
-/// 工单附件表（存储工单提交时的附件）
-model WorkOrderAttachment {
-  id            Int               @id @default(autoincrement()) /// 自增主键
-  workOrderId   Int               @map("work_order_id") /// 关联的工单ID
-  fileName      String            @map("file_name") /// 原始文件名
-  fileType      String            @map("file_type") /// MIME类型
-  fileSize      Int               @map("file_size") /// 文件大小（字节）
-  fileUrl       String            @map("file_url") /// 存储URL
-  uploadTime    DateTime          @default(now()) @map("upload_time") /// 上传时间
-  
-  // 关联关系
-  workOrder     WorkOrder         @relation(fields: [workOrderId], references: [id], onDelete: Cascade, map: "x_chat_work_order_attachments_order_id_fkey") /// 关联的工单
-  
-  @@map("x_chat_work_order_attachments")
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model oms_company_address {
+  id             BigInt  @id @default(autoincrement())
+  address_name   String? @db.VarChar(200)
+  send_status    Int?
+  receive_status Int?
+  name           String? @db.VarChar(64)
+  phone          String? @db.VarChar(64)
+  province       String? @db.VarChar(64)
+  city           String? @db.VarChar(64)
+  region         String? @db.VarChar(64)
+  detail_address String? @db.VarChar(200)
 }
 
-/// 工单回复表（存储工单的回复内容）
-model WorkOrderReply {
-  id            Int               @id @default(autoincrement()) /// 自增主键
-  workOrderId   Int               @map("work_order_id") /// 关联的工单ID
-  senderType    String            /// 回复者类型（user=客户，agent=客服）
-  senderId      Int               @map("sender_id") /// 回复者ID
-  content       String            /// 回复内容
-  replyTime     DateTime          @default(now()) @map("reply_time") /// 回复时间
-  
-  // 关联关系
-  workOrder     WorkOrder         @relation(fields: [workOrderId], references: [id], onDelete: Cascade, map: "x_chat_work_order_replies_order_id_fkey") /// 关联的工单
-  attachments   WorkOrderReplyAttachment[] /// 回复的所有附件
-  
-  @@map("x_chat_work_order_replies")
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model oms_order {
+  id                      BigInt    @id @default(autoincrement())
+  member_id               BigInt
+  coupon_id               BigInt?
+  order_sn                String?   @db.VarChar(64)
+  create_time             DateTime? @db.DateTime(0)
+  member_username         String?   @db.VarChar(64)
+  total_amount            Decimal?  @db.Decimal(10, 2)
+  pay_amount              Decimal?  @db.Decimal(10, 2)
+  freight_amount          Decimal?  @db.Decimal(10, 2)
+  promotion_amount        Decimal?  @db.Decimal(10, 2)
+  integration_amount      Decimal?  @db.Decimal(10, 2)
+  coupon_amount           Decimal?  @db.Decimal(10, 2)
+  discount_amount         Decimal?  @db.Decimal(10, 2)
+  pay_type                Int?
+  source_type             Int?
+  status                  Int?
+  order_type              Int?
+  delivery_company        String?   @db.VarChar(64)
+  delivery_sn             String?   @db.VarChar(64)
+  auto_confirm_day        Int?
+  integration             Int?
+  growth                  Int?
+  promotion_info          String?   @db.VarChar(100)
+  bill_type               Int?
+  bill_header             String?   @db.VarChar(200)
+  bill_content            String?   @db.VarChar(200)
+  bill_receiver_phone     String?   @db.VarChar(32)
+  bill_receiver_email     String?   @db.VarChar(64)
+  receiver_name           String    @db.VarChar(100)
+  receiver_phone          String    @db.VarChar(32)
+  receiver_post_code      String?   @db.VarChar(32)
+  receiver_province       String?   @db.VarChar(32)
+  receiver_city           String?   @db.VarChar(32)
+  receiver_region         String?   @db.VarChar(32)
+  receiver_detail_address String?   @db.VarChar(200)
+  note                    String?   @db.VarChar(500)
+  confirm_status          Int?
+  delete_status           Int       @default(0)
+  use_integration         Int?
+  payment_time            DateTime? @db.DateTime(0)
+  delivery_time           DateTime? @db.DateTime(0)
+  receive_time            DateTime? @db.DateTime(0)
+  comment_time            DateTime? @db.DateTime(0)
+  modify_time             DateTime? @db.DateTime(0)
 }
 
-/// 工单回复附件表（存储工单回复时的附件）
-model WorkOrderReplyAttachment {
-  id            Int               @id @default(autoincrement()) /// 自增主键
-  replyId       Int               @map("reply_id") /// 关联的回复ID
-  fileName      String            @map("file_name") /// 原始文件名
-  fileType      String            @map("file_type") /// MIME类型
-  fileSize      Int               @map("file_size") /// 文件大小（字节）
-  fileUrl       String            @map("file_url") /// 存储URL
-  uploadTime    DateTime          @default(now()) @map("upload_time") /// 上传时间
-  
-  // 关联关系
-  reply         WorkOrderReply    @relation(fields: [replyId], references: [id], onDelete: Cascade, map: "x_chat_work_order_reply_attachments_reply_id_fkey") /// 关联的回复
-  
-  @@map("x_chat_work_order_reply_attachments")
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model oms_order_item {
+  id                  BigInt   @id @default(autoincrement())
+  order_id            BigInt?
+  order_sn            String?  @db.VarChar(64)
+  product_id          BigInt?
+  product_pic         String?  @db.VarChar(500)
+  product_name        String?  @db.VarChar(200)
+  product_brand       String?  @db.VarChar(200)
+  product_sn          String?  @db.VarChar(64)
+  product_price       Decimal? @db.Decimal(10, 2)
+  product_quantity    Int?
+  product_sku_id      BigInt?
+  product_sku_code    String?  @db.VarChar(50)
+  product_category_id BigInt?
+  promotion_name      String?  @db.VarChar(200)
+  promotion_amount    Decimal? @db.Decimal(10, 2)
+  coupon_amount       Decimal? @db.Decimal(10, 2)
+  integration_amount  Decimal? @db.Decimal(10, 2)
+  real_amount         Decimal? @db.Decimal(10, 2)
+  gift_integration    Int?     @default(0)
+  gift_growth         Int?     @default(0)
+  product_attr        String?  @db.VarChar(500)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model oms_order_operate_history {
+  id           BigInt    @id @default(autoincrement())
+  order_id     BigInt?
+  operate_man  String?   @db.VarChar(100)
+  create_time  DateTime? @db.DateTime(0)
+  order_status Int?
+  note         String?   @db.VarChar(500)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model oms_order_return_apply {
+  id                 BigInt    @id @default(autoincrement())
+  order_id           BigInt?
+  company_address_id BigInt?
+  product_id         BigInt?
+  order_sn           String?   @db.VarChar(64)
+  create_time        DateTime? @db.DateTime(0)
+  member_username    String?   @db.VarChar(64)
+  return_amount      Decimal?  @db.Decimal(10, 2)
+  return_name        String?   @db.VarChar(100)
+  return_phone       String?   @db.VarChar(100)
+  status             Int?
+  handle_time        DateTime? @db.DateTime(0)
+  product_pic        String?   @db.VarChar(500)
+  product_name       String?   @db.VarChar(200)
+  product_brand      String?   @db.VarChar(200)
+  product_attr       String?   @db.VarChar(500)
+  product_count      Int?
+  product_price      Decimal?  @db.Decimal(10, 2)
+  product_real_price Decimal?  @db.Decimal(10, 2)
+  reason             String?   @db.VarChar(200)
+  description        String?   @db.VarChar(500)
+  proof_pics         String?   @db.VarChar(1000)
+  handle_note        String?   @db.VarChar(500)
+  handle_man         String?   @db.VarChar(100)
+  receive_man        String?   @db.VarChar(100)
+  receive_time       DateTime? @db.DateTime(0)
+  receive_note       String?   @db.VarChar(500)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model oms_order_return_reason {
+  id          BigInt    @id @default(autoincrement())
+  name        String?   @db.VarChar(100)
+  sort        Int?
+  status      Int?
+  create_time DateTime? @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model oms_order_setting {
+  id                    BigInt @id @default(autoincrement())
+  flash_order_overtime  Int?
+  normal_order_overtime Int?
+  confirm_overtime      Int?
+  finish_overtime       Int?
+  comment_overtime      Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model pms_album {
+  id          BigInt  @id @default(autoincrement())
+  name        String? @db.VarChar(64)
+  cover_pic   String? @db.VarChar(1000)
+  pic_count   Int?
+  sort        Int?
+  description String? @db.VarChar(1000)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model pms_album_pic {
+  id       BigInt  @id @default(autoincrement())
+  album_id BigInt?
+  pic      String? @db.VarChar(1000)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model pms_brand {
+  id                    BigInt  @id @default(autoincrement())
+  name                  String? @db.VarChar(64)
+  first_letter          String? @db.VarChar(8)
+  sort                  Int?
+  factory_status        Int?
+  show_status           Int?
+  product_count         Int?
+  product_comment_count Int?
+  logo                  String? @db.VarChar(255)
+  big_pic               String? @db.VarChar(255)
+  brand_story           String? @db.Text
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model pms_comment {
+  id                BigInt    @id @default(autoincrement())
+  product_id        BigInt?
+  member_nick_name  String?   @db.VarChar(255)
+  product_name      String?   @db.VarChar(255)
+  star              Int?
+  member_ip         String?   @db.VarChar(64)
+  create_time       DateTime? @db.DateTime(0)
+  show_status       Int?
+  product_attribute String?   @db.VarChar(255)
+  collect_couont    Int?
+  read_count        Int?
+  content           String?   @db.Text
+  pics              String?   @db.VarChar(1000)
+  member_icon       String?   @db.VarChar(255)
+  replay_count      Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model pms_comment_replay {
+  id               BigInt    @id @default(autoincrement())
+  comment_id       BigInt?
+  member_nick_name String?   @db.VarChar(255)
+  member_icon      String?   @db.VarChar(255)
+  content          String?   @db.VarChar(1000)
+  create_time      DateTime? @db.DateTime(0)
+  type             Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model pms_feight_template {
+  id              BigInt   @id @default(autoincrement())
+  name            String?  @db.VarChar(64)
+  charge_type     Int?
+  first_weight    Decimal? @db.Decimal(10, 2)
+  first_fee       Decimal? @db.Decimal(10, 2)
+  continue_weight Decimal? @db.Decimal(10, 2)
+  continme_fee    Decimal? @db.Decimal(10, 2)
+  dest            String?  @db.VarChar(255)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model pms_member_price {
+  id                BigInt   @id @default(autoincrement())
+  product_id        BigInt?
+  member_level_id   BigInt?
+  member_price      Decimal? @db.Decimal(10, 2)
+  member_level_name String?  @db.VarChar(100)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model pms_product {
+  id                            BigInt    @id @default(autoincrement())
+  brand_id                      BigInt?
+  product_category_id           BigInt?
+  feight_template_id            BigInt?
+  product_attribute_category_id BigInt?
+  name                          String    @db.VarChar(200)
+  pic                           String?   @db.VarChar(255)
+  product_sn                    String    @db.VarChar(64)
+  delete_status                 Int?
+  publish_status                Int?
+  new_status                    Int?
+  recommand_status              Int?
+  verify_status                 Int?
+  sort                          Int?
+  sale                          Int?
+  price                         Decimal?  @db.Decimal(10, 2)
+  promotion_price               Decimal?  @db.Decimal(10, 2)
+  gift_growth                   Int?      @default(0)
+  gift_point                    Int?      @default(0)
+  use_point_limit               Int?
+  sub_title                     String?   @db.VarChar(255)
+  description                   String?   @db.Text
+  original_price                Decimal?  @db.Decimal(10, 2)
+  stock                         Int?
+  low_stock                     Int?
+  unit                          String?   @db.VarChar(16)
+  weight                        Decimal?  @db.Decimal(10, 2)
+  preview_status                Int?
+  service_ids                   String?   @db.VarChar(64)
+  keywords                      String?   @db.VarChar(255)
+  note                          String?   @db.VarChar(255)
+  album_pics                    String?   @db.VarChar(255)
+  detail_title                  String?   @db.VarChar(255)
+  detail_desc                   String?   @db.Text
+  detail_html                   String?   @db.Text
+  detail_mobile_html            String?   @db.Text
+  promotion_start_time          DateTime? @db.DateTime(0)
+  promotion_end_time            DateTime? @db.DateTime(0)
+  promotion_per_limit           Int?
+  promotion_type                Int?
+  brand_name                    String?   @db.VarChar(255)
+  product_category_name         String?   @db.VarChar(255)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model pms_product_attribute {
+  id                            BigInt  @id @default(autoincrement())
+  product_attribute_category_id BigInt?
+  name                          String? @db.VarChar(64)
+  select_type                   Int?
+  input_type                    Int?
+  input_list                    String? @db.VarChar(255)
+  sort                          Int?
+  filter_type                   Int?
+  search_type                   Int?
+  related_status                Int?
+  hand_add_status               Int?
+  type                          Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model pms_product_attribute_category {
+  id              BigInt  @id @default(autoincrement())
+  name            String? @db.VarChar(64)
+  attribute_count Int?    @default(0)
+  param_count     Int?    @default(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model pms_product_attribute_value {
+  id                   BigInt  @id @default(autoincrement())
+  product_id           BigInt?
+  product_attribute_id BigInt?
+  value                String? @db.VarChar(64)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model pms_product_category {
+  id            BigInt  @id @default(autoincrement())
+  parent_id     BigInt?
+  name          String? @db.VarChar(64)
+  level         Int?
+  product_count Int?
+  product_unit  String? @db.VarChar(64)
+  nav_status    Int?
+  show_status   Int?
+  sort          Int?
+  icon          String? @db.VarChar(255)
+  keywords      String? @db.VarChar(255)
+  description   String? @db.Text
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model pms_product_category_attribute_relation {
+  id                   BigInt  @id @default(autoincrement())
+  product_category_id  BigInt?
+  product_attribute_id BigInt?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model pms_product_full_reduction {
+  id           BigInt   @id @default(autoincrement())
+  product_id   BigInt?
+  full_price   Decimal? @db.Decimal(10, 2)
+  reduce_price Decimal? @db.Decimal(10, 2)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model pms_product_ladder {
+  id         BigInt   @id @default(autoincrement())
+  product_id BigInt?
+  count      Int?
+  discount   Decimal? @db.Decimal(10, 2)
+  price      Decimal? @db.Decimal(10, 2)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model pms_product_operate_log {
+  id                  BigInt    @id @default(autoincrement())
+  product_id          BigInt?
+  price_old           Decimal?  @db.Decimal(10, 2)
+  price_new           Decimal?  @db.Decimal(10, 2)
+  sale_price_old      Decimal?  @db.Decimal(10, 2)
+  sale_price_new      Decimal?  @db.Decimal(10, 2)
+  gift_point_old      Int?
+  gift_point_new      Int?
+  use_point_limit_old Int?
+  use_point_limit_new Int?
+  operate_man         String?   @db.VarChar(64)
+  create_time         DateTime? @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model pms_product_vertify_record {
+  id          BigInt    @id @default(autoincrement())
+  product_id  BigInt?
+  create_time DateTime? @db.DateTime(0)
+  vertify_man String?   @db.VarChar(64)
+  status      Int?
+  detail      String?   @db.VarChar(255)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model pms_sku_stock {
+  id              BigInt   @id @default(autoincrement())
+  product_id      BigInt?
+  sku_code        String   @db.VarChar(64)
+  price           Decimal? @db.Decimal(10, 2)
+  stock           Int?     @default(0)
+  low_stock       Int?
+  pic             String?  @db.VarChar(255)
+  sale            Int?
+  promotion_price Decimal? @db.Decimal(10, 2)
+  lock_stock      Int?     @default(0)
+  sp_data         String?  @db.VarChar(500)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model sms_coupon {
+  id            BigInt    @id @default(autoincrement())
+  type          Int?
+  name          String?   @db.VarChar(100)
+  platform      Int?
+  count         Int?
+  amount        Decimal?  @db.Decimal(10, 2)
+  per_limit     Int?
+  min_point     Decimal?  @db.Decimal(10, 2)
+  start_time    DateTime? @db.DateTime(0)
+  end_time      DateTime? @db.DateTime(0)
+  use_type      Int?
+  note          String?   @db.VarChar(200)
+  publish_count Int?
+  use_count     Int?
+  receive_count Int?
+  enable_time   DateTime? @db.DateTime(0)
+  code          String?   @db.VarChar(64)
+  member_level  Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model sms_coupon_history {
+  id              BigInt    @id @default(autoincrement())
+  coupon_id       BigInt?
+  member_id       BigInt?
+  coupon_code     String?   @db.VarChar(64)
+  member_nickname String?   @db.VarChar(64)
+  get_type        Int?
+  create_time     DateTime? @db.DateTime(0)
+  use_status      Int?
+  use_time        DateTime? @db.DateTime(0)
+  order_id        BigInt?
+  order_sn        String?   @db.VarChar(100)
+
+  @@index([coupon_id], map: "idx_coupon_id")
+  @@index([member_id], map: "idx_member_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model sms_coupon_product_category_relation {
+  id                    BigInt  @id @default(autoincrement())
+  coupon_id             BigInt?
+  product_category_id   BigInt?
+  product_category_name String? @db.VarChar(200)
+  parent_category_name  String? @db.VarChar(200)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model sms_coupon_product_relation {
+  id           BigInt  @id @default(autoincrement())
+  coupon_id    BigInt?
+  product_id   BigInt?
+  product_name String? @db.VarChar(500)
+  product_sn   String? @db.VarChar(200)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model sms_flash_promotion {
+  id          BigInt    @id @default(autoincrement())
+  title       String?   @db.VarChar(200)
+  start_date  DateTime? @db.Date
+  end_date    DateTime? @db.Date
+  status      Int?
+  create_time DateTime? @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model sms_flash_promotion_log {
+  id             Int       @id @default(autoincrement())
+  member_id      Int?
+  product_id     BigInt?
+  member_phone   String?   @db.VarChar(64)
+  product_name   String?   @db.VarChar(100)
+  subscribe_time DateTime? @db.DateTime(0)
+  send_time      DateTime? @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model sms_flash_promotion_product_relation {
+  id                         BigInt   @id @default(autoincrement())
+  flash_promotion_id         BigInt?
+  flash_promotion_session_id BigInt?
+  product_id                 BigInt?
+  flash_promotion_price      Decimal? @db.Decimal(10, 2)
+  flash_promotion_count      Int?
+  flash_promotion_limit      Int?
+  sort                       Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model sms_flash_promotion_session {
+  id          BigInt    @id @default(autoincrement())
+  name        String?   @db.VarChar(200)
+  start_time  DateTime? @db.Time(0)
+  end_time    DateTime? @db.Time(0)
+  status      Int?
+  create_time DateTime? @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model sms_home_advertise {
+  id          BigInt    @id @default(autoincrement())
+  name        String?   @db.VarChar(100)
+  type        Int?
+  pic         String?   @db.VarChar(500)
+  start_time  DateTime? @db.DateTime(0)
+  end_time    DateTime? @db.DateTime(0)
+  status      Int?
+  click_count Int?
+  order_count Int?
+  url         String?   @db.VarChar(500)
+  note        String?   @db.VarChar(500)
+  sort        Int?      @default(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model sms_home_brand {
+  id               BigInt  @id @default(autoincrement())
+  brand_id         BigInt?
+  brand_name       String? @db.VarChar(64)
+  recommend_status Int?
+  sort             Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model sms_home_new_product {
+  id               BigInt  @id @default(autoincrement())
+  product_id       BigInt?
+  product_name     String? @db.VarChar(500)
+  recommend_status Int?
+  sort             Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model sms_home_recommend_product {
+  id               BigInt  @id @default(autoincrement())
+  product_id       BigInt?
+  product_name     String? @db.VarChar(500)
+  recommend_status Int?
+  sort             Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model sms_home_recommend_subject {
+  id               BigInt  @id @default(autoincrement())
+  subject_id       BigInt?
+  subject_name     String? @db.VarChar(64)
+  recommend_status Int?
+  sort             Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ums_admin {
+  id          BigInt    @id @default(autoincrement())
+  username    String?   @db.VarChar(64)
+  password    String?   @db.VarChar(64)
+  icon        String?   @db.VarChar(500)
+  email       String?   @db.VarChar(100)
+  nick_name   String?   @db.VarChar(200)
+  note        String?   @db.VarChar(500)
+  create_time DateTime? @db.DateTime(0)
+  login_time  DateTime? @db.DateTime(0)
+  status      Int?      @default(1)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ums_admin_login_log {
+  id          BigInt    @id @default(autoincrement())
+  admin_id    BigInt?
+  create_time DateTime? @db.DateTime(0)
+  ip          String?   @db.VarChar(64)
+  address     String?   @db.VarChar(100)
+  user_agent  String?   @db.VarChar(100)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ums_admin_permission_relation {
+  id            BigInt  @id @default(autoincrement())
+  admin_id      BigInt?
+  permission_id BigInt?
+  type          Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ums_admin_role_relation {
+  id       BigInt  @id @default(autoincrement())
+  admin_id BigInt?
+  role_id  BigInt?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ums_growth_change_history {
+  id           BigInt    @id @default(autoincrement())
+  member_id    BigInt?
+  create_time  DateTime? @db.DateTime(0)
+  change_type  Int?
+  change_count Int?
+  operate_man  String?   @db.VarChar(100)
+  operate_note String?   @db.VarChar(200)
+  source_type  Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ums_integration_change_history {
+  id           BigInt    @id @default(autoincrement())
+  member_id    BigInt?
+  create_time  DateTime? @db.DateTime(0)
+  change_type  Int?
+  change_count Int?
+  operate_man  String?   @db.VarChar(100)
+  operate_note String?   @db.VarChar(200)
+  source_type  Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ums_integration_consume_setting {
+  id                    BigInt @id @default(autoincrement())
+  deduction_per_amount  Int?
+  max_percent_per_order Int?
+  use_unit              Int?
+  coupon_status         Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ums_member {
+  id                     BigInt    @id @default(autoincrement())
+  member_level_id        BigInt?
+  username               String?   @unique(map: "idx_username") @db.VarChar(64)
+  password               String?   @db.VarChar(64)
+  nickname               String?   @db.VarChar(64)
+  phone                  String?   @unique(map: "idx_phone") @db.VarChar(64)
+  status                 Int?
+  create_time            DateTime? @db.DateTime(0)
+  icon                   String?   @db.VarChar(500)
+  gender                 Int?
+  birthday               DateTime? @db.Date
+  city                   String?   @db.VarChar(64)
+  job                    String?   @db.VarChar(100)
+  personalized_signature String?   @db.VarChar(200)
+  source_type            Int?
+  integration            Int?
+  growth                 Int?
+  luckey_count           Int?
+  history_integration    Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ums_member_level {
+  id                      BigInt   @id @default(autoincrement())
+  name                    String?  @db.VarChar(100)
+  growth_point            Int?
+  default_status          Int?
+  free_freight_point      Decimal? @db.Decimal(10, 2)
+  comment_growth_point    Int?
+  priviledge_free_freight Int?
+  priviledge_sign_in      Int?
+  priviledge_comment      Int?
+  priviledge_promotion    Int?
+  priviledge_member_price Int?
+  priviledge_birthday     Int?
+  note                    String?  @db.VarChar(200)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ums_member_login_log {
+  id          BigInt    @id @default(autoincrement())
+  member_id   BigInt?
+  create_time DateTime? @db.DateTime(0)
+  ip          String?   @db.VarChar(64)
+  city        String?   @db.VarChar(64)
+  login_type  Int?
+  province    String?   @db.VarChar(64)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ums_member_member_tag_relation {
+  id        BigInt  @id @default(autoincrement())
+  member_id BigInt?
+  tag_id    BigInt?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ums_member_product_category_relation {
+  id                  BigInt  @id @default(autoincrement())
+  member_id           BigInt?
+  product_category_id BigInt?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ums_member_receive_address {
+  id             BigInt  @id @default(autoincrement())
+  member_id      BigInt?
+  name           String? @db.VarChar(100)
+  phone_number   String? @db.VarChar(64)
+  default_status Int?
+  post_code      String? @db.VarChar(100)
+  province       String? @db.VarChar(100)
+  city           String? @db.VarChar(100)
+  region         String? @db.VarChar(100)
+  detail_address String? @db.VarChar(128)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ums_member_rule_setting {
+  id                  BigInt   @id @default(autoincrement())
+  continue_sign_day   Int?
+  continue_sign_point Int?
+  consume_per_point   Decimal? @db.Decimal(10, 2)
+  low_order_amount    Decimal? @db.Decimal(10, 2)
+  max_point_per_order Int?
+  type                Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ums_member_statistics_info {
+  id                    BigInt    @id @default(autoincrement())
+  member_id             BigInt?
+  consume_amount        Decimal?  @db.Decimal(10, 2)
+  order_count           Int?
+  coupon_count          Int?
+  comment_count         Int?
+  return_order_count    Int?
+  login_count           Int?
+  attend_count          Int?
+  fans_count            Int?
+  collect_product_count Int?
+  collect_subject_count Int?
+  collect_topic_count   Int?
+  collect_comment_count Int?
+  invite_friend_count   Int?
+  recent_order_time     DateTime? @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ums_member_tag {
+  id                  BigInt   @id @default(autoincrement())
+  name                String?  @db.VarChar(100)
+  finish_order_count  Int?
+  finish_order_amount Decimal? @db.Decimal(10, 2)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ums_member_task {
+  id           BigInt  @id @default(autoincrement())
+  name         String? @db.VarChar(100)
+  growth       Int?
+  intergration Int?
+  type         Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ums_menu {
+  id          BigInt    @id @default(autoincrement())
+  parent_id   BigInt?
+  create_time DateTime? @db.DateTime(0)
+  title       String?   @db.VarChar(100)
+  level       Int?
+  sort        Int?
+  name        String?   @db.VarChar(100)
+  icon        String?   @db.VarChar(200)
+  hidden      Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ums_permission {
+  id          BigInt    @id @default(autoincrement())
+  pid         BigInt?
+  name        String?   @db.VarChar(100)
+  value       String?   @db.VarChar(200)
+  icon        String?   @db.VarChar(500)
+  type        Int?
+  uri         String?   @db.VarChar(200)
+  status      Int?
+  create_time DateTime? @db.DateTime(0)
+  sort        Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ums_resource {
+  id          BigInt    @id @default(autoincrement())
+  create_time DateTime? @db.DateTime(0)
+  name        String?   @db.VarChar(200)
+  url         String?   @db.VarChar(200)
+  description String?   @db.VarChar(500)
+  category_id BigInt?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ums_resource_category {
+  id          BigInt    @id @default(autoincrement())
+  create_time DateTime? @db.DateTime(0)
+  name        String?   @db.VarChar(200)
+  sort        Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ums_role {
+  id          BigInt    @id @default(autoincrement())
+  name        String?   @db.VarChar(100)
+  description String?   @db.VarChar(500)
+  admin_count Int?
+  create_time DateTime? @db.DateTime(0)
+  status      Int?      @default(1)
+  sort        Int?      @default(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ums_role_menu_relation {
+  id      BigInt  @id @default(autoincrement())
+  role_id BigInt?
+  menu_id BigInt?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ums_role_permission_relation {
+  id            BigInt  @id @default(autoincrement())
+  role_id       BigInt?
+  permission_id BigInt?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ums_role_resource_relation {
+  id          BigInt  @id @default(autoincrement())
+  role_id     BigInt?
+  resource_id BigInt?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model x_cms_help {
+  id          BigInt    @id @default(autoincrement())
+  category_id BigInt?
+  icon        String?   @db.VarChar(500)
+  title       String?   @db.VarChar(100)
+  show_status Int?
+  create_time DateTime? @db.DateTime(0)
+  read_count  Int?
+  content     String?   @db.Text
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model x_cms_help_category {
+  id          BigInt  @id @default(autoincrement())
+  name        String? @db.VarChar(100)
+  icon        String? @db.VarChar(500)
+  help_count  Int?
+  show_status Int?
+  sort        Int?
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model x_cms_member_report {
+  id                 BigInt?
+  report_type        Int?
+  report_member_name String?   @db.VarChar(100)
+  create_time        DateTime? @db.DateTime(0)
+  report_object      String?   @db.VarChar(100)
+  report_status      Int?
+  handle_status      Int?
+  note               String?   @db.VarChar(200)
+
+  @@ignore
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model x_cms_prefrence_area {
+  id          BigInt  @id @default(autoincrement())
+  name        String? @db.VarChar(255)
+  sub_title   String? @db.VarChar(255)
+  pic         Bytes?  @db.VarBinary(500)
+  sort        Int?
+  show_status Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model x_pms_product_ladder {
+  id         BigInt   @id @default(autoincrement())
+  product_id BigInt?
+  count      Int?
+  discount   Decimal? @db.Decimal(10, 2)
+  price      Decimal? @db.Decimal(10, 2)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model x_ums_admin_role_relation {
+  id       BigInt  @id @default(autoincrement())
+  admin_id BigInt?
+  role_id  BigInt?
 }

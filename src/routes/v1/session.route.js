@@ -2,7 +2,7 @@
 const express = require('express');
 const { detectLocale } = require('../../utils/i18n');
 const sessionController = require('../../controllers/sessionController');
-const { apiCreateRateLimiter } = require('../../middlewares/rateLimiter');
+// const { apiCreateRateLimiter } = require('../../middlewares/rateLimiter');
 
 const router = express.Router();
 

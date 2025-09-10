@@ -3,6 +3,7 @@ const router = express.Router();
 
 // 导入各业务路由模块
 const sessionRoutes = require('./session.route');
+const goodRoutes = require('./good.route');
 // 可在此处导入其他路由，例如：
 // const agentRoutes = require('./agent.route');
 // const userRoutes = require('./user.route');
@@ -11,6 +12,7 @@ const sessionRoutes = require('./session.route');
 // 挂载会话相关路由
 // 所有会话接口路径前缀为 /api/v1/sessions
 router.use('/sessions', sessionRoutes);
+router.use('/goods', goodRoutes);
 
 // 可在此处挂载其他路由，例如：
 // router.use('/agents', agentRoutes);
