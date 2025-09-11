@@ -1,0 +1,116 @@
+<!-- templates/emails/register-verification-code.ejs -->
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>注册验证码 - X-Mall</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background-color: #f7f9fc;
+      color: #333;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 600px;
+      margin: 30px auto;
+      background: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      background: #28a745;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+    }
+    .header span {
+      color: #fff3cd;
+    }
+    .content {
+      padding: 30px;
+      text-align: center;
+    }
+    .title {
+      font-size: 20px;
+      color: #333;
+      margin-bottom: 20px;
+    }
+    .code-box {
+      display: inline-block;
+      padding: 15px 20px;
+      background: #f0fff4;
+      border: 1px dashed #28a745;
+      border-radius: 8px;
+      font-size: 28px;
+      font-weight: bold;
+      letter-spacing: 10px;
+      color: #28a745;
+      margin: 20px 0;
+    }
+    .note {
+      font-size: 14px;
+      color: #666;
+      margin-top: 20px;
+    }
+    .highlight {
+      color: #d32f2f;
+      font-weight: bold;
+    }
+    .footer {
+      background: #f1f1f1;
+      padding: 15px;
+      text-align: center;
+      font-size: 12px;
+      color: #888;
+    }
+    .footer a {
+      color: #007bff;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      X-<span>Mall</span>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <h2 class="title">欢迎加入 X-Mall！</h2>
+      <p>感谢您注册我们的电商平台。</p>
+      <p>请使用以下验证码完成账户注册：</p>
+
+      <!-- 验证码展示 -->
+      <div class="code-box">
+        <%= verificationCode %>
+      </div>
+
+      <p class="note">
+        验证码有效期为 <strong>10 分钟</strong>，请勿泄露给他人。<br/>
+        如果您未申请注册，请忽略此邮件或 <a href="https://x-mall.example.com/report-abuse" style="color: #d32f2f;">点击举报滥用行为</a>。
+      </p>
+
+      <p class="note">
+        注册即表示您同意我们的 <a href="https://x-mall.example.com/terms">服务条款</a> 和 <a href="https://x-mall.example.com/privacy">隐私政策</a>。
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      &copy; <%= new Date().getFullYear() %> X-Mall. All rights reserved.<br/>
+      <a href="https://x-mall.example.com">访问官网</a> | 
+      <a href="https://help.x-mall.example.com">帮助中心</a> | 
+      <a href="https://x-mall.example.com/contact">联系我们</a>
+    </div>
+  </div>
+</body>
+</html>

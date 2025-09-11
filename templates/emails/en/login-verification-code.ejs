@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login Verification Code - X-Mall</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background-color: #f7f9fc;
+      color: #333;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 600px;
+      margin: 30px auto;
+      background: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      background: #007bff;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+    }
+    .header span {
+      color: #fff3cd;
+    }
+    .content {
+      padding: 30px;
+      text-align: center;
+    }
+    .title {
+      font-size: 20px;
+      color: #333;
+      margin-bottom: 20px;
+    }
+    .code-box {
+      display: inline-block;
+      padding: 15px 20px;
+      background: #f0f5ff;
+      border: 1px dashed #007bff;
+      border-radius: 8px;
+      font-size: 28px;
+      font-weight: bold;
+      letter-spacing: 10px;
+      color: #007bff;
+      margin: 20px 0;
+    }
+    .note {
+      font-size: 14px;
+      color: #666;
+      margin-top: 20px;
+    }
+    .footer {
+      background: #f1f1f1;
+      padding: 15px;
+      text-align: center;
+      font-size: 12px;
+      color: #888;
+    }
+    .footer a {
+      color: #007bff;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      X-<span>Mall</span>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <h2 class="title">Hello, <%= userName || 'User' %>!</h2>
+      <p>You are attempting to log in to your <strong>X-Mall</strong> account.</p>
+      <p>Please use the following verification code to complete identity authentication:</p>
+
+      <!-- Verification Code Display -->
+      <div class="code-box">
+        <%= verificationCode %>
+      </div>
+
+      <p class="note">
+        The verification code is valid for <strong>5 minutes</strong> and should not be shared with others.<br/>
+        If you did not initiate this action, please ignore this email.
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      &copy; <%= new Date().getFullYear() %> X-Mall. All rights reserved.<br/>
+      <a href="https://x-mall.example.com">Visit Website</a> | 
+      <a href="https://help.x-mall.example.com">Help Center</a>
+    </div>
+  </div>
+</body>
+</html>
