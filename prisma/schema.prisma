@@ -803,6 +803,7 @@ model ums_member {
   growth                 Int?
   luckey_count           Int?
   history_integration    Int?
+  email                  String?   @unique(map: "idx_email") @db.VarChar(255)
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments

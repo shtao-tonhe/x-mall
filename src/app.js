@@ -1,3 +1,6 @@
+
+require('dotenv').config({ path: '.env.development' });
+
 const express = require('express');
 const { detectLocale } = require('./utils/i18n');
 // const { globalRateLimiter } = require('./middlewares/rateLimiter');
