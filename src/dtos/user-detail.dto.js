@@ -1,18 +1,23 @@
 
 const { formatDateTime, serializeBigInt } = require('../utils/helpers');
 
-class GooDListDTO {
+class UserDetailDTO {
   /**
-   * 接收一个 good 数组，返回格式化后的列表
-   * @param {Array} goods - Prisma 查询出来的 good 列表
+   * 接收一个 good 对象，返回格式化后
+   * @param {Object} good - Prisma 查询出来的 good
    */
-  constructor(goods) {
-    if (!Array.isArray(goods)) {
-      this.data = [];
+  constructor(good) {
+    // 如果属于异常状态直接返回id+状态字段，其余字段忽略
+    if (good.verify_status !== 1 || good.delete_status === 1) {
+      this.data = {
+        id: serializeBigInt(good.id),
+        verify_status: good.verify_status,
+        delete_status: good.delete_status,
+      };
       return;
     }
 
-    this.data = goods.map(good => ({
+    this.data = {
       id: serializeBigInt(good.id),
       brand_id: serializeBigInt(good.brand_id) || null,
       product_category_id: serializeBigInt(good.product_category_id) || null,
@@ -55,8 +60,8 @@ class GooDListDTO {
       promotion_type: good.promotion_type,
       brand_name: good.brand_name,
       product_category_name: good.product_category_name,
-    }));
+    };
   }
 }
 
-module.exports = GooDListDTO;
+module.exports = UserDetailDTO;

@@ -269,6 +269,15 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+/**
+ * 生成 6 位纯数字验证码
+ */
+function generateVerificationCode() {
+  const min = 100000; // 最小 6 位数
+  const max = 999999; // 最大 6 位数
+  return Math.floor(Math.random() * (max - min + 1) + min).toString();
+}
+
 // 👇 导出所有工具函数
 module.exports = {
   // 📅 日期
@@ -304,4 +313,5 @@ module.exports = {
 
   // ⏳ 异步辅助
   sleep,
+  generateVerificationCode,
 };

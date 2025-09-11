@@ -1,16 +1,16 @@
 
 const express = require('express')
 const { detectLocale } = require('../../utils/i18n');
-const goodController = require('../../controllers/good.controller');
+const productController = require('../../controllers/product.controller');
 
 const router = express.Router();
 
 router.use(detectLocale);
 
 // 查询商品列表
-router.post('/list', goodController.getGoodsByHome);
+router.post('/list', productController.getProductsByHome);
 
 // 查询商品详情
-router.get(':id', goodController.getGoodsByHome);
+router.post('/:id', productController.getProductById);
 
 module.exports = router;
