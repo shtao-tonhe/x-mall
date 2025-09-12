@@ -4,8 +4,7 @@
 require('dotenv').config();
 const orderService = require('../services/order.service.js');
 
-// const OrderListDTO = require('../dtos/order-list.dto.js');
-// const OrderDetailDTO = require('../dtos/order-detail.dto.js');
+const OrderDetailDTO = require('../dtos/order-detail.dto.js');
 const Result = require('../utils/Result.js');
 const { t, detectLocale } = require('../utils/i18n/index.js');
 
@@ -13,7 +12,11 @@ const { t, detectLocale } = require('../utils/i18n/index.js');
  * 订单控制器
  */
 class orderController {
-  getPaymentInfo(method, amount) {
+  constructor() {
+    this.createOrder = this.createOrder.bind(this);
+  }
+
+  getPaymentInfo = (method, amount) => {
     if (method === 'usdt') {
       return {
         toAddress: process.env.USDT_WALLET_ADDRESS,
@@ -52,10 +55,12 @@ class orderController {
       });
 
       // ✅ 所有校验通过，返回订单 + 支付信息
-      const paymentInfo = getPaymentInfo(paymentMethod, order.amount);
+      const paymentInfo = this.getPaymentInfo(paymentMethod, order.amount);
+
+      const orderDetailDTO = new OrderDetailDTO(order);
 
       res.json(Result.success({
-        ...order,
+        ...orderDetailDTO,
         paymentInfo
       }));
 

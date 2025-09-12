@@ -17,6 +17,10 @@ class ProductService {
       },
       select: {
         id: true,
+        name: true,
+        price: true,
+        stock: true,
+        album_pics: true,
       }
     });
 
@@ -32,7 +36,7 @@ class ProductService {
         name: product.name,
         price: product.price,     // 数据库中的真实价格
         stock: product.stock,
-        image: product.image
+        image: product.album_pics
       };
     });
 

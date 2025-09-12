@@ -6,12 +6,14 @@ const productRoute = require('./product.route');
 const userRoute = require('./user.route');
 const orderRoute = require('./order.route');
 const paymentRoute = require('./payment.route');
+const couponRoute = require('./coupon.route');
 
 // 所有会话接口路径前缀为 /api/v1/xxxxx
 router.use('/product', productRoute);
 router.use('/user', userRoute);
 router.use('/order', orderRoute);
 router.use('/payment', paymentRoute);
+router.use('/coupon', couponRoute);
 
 // 根路径测试接口
 router.get('/', (req, res) => {
