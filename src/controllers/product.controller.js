@@ -87,6 +87,30 @@ class ProductController {
       next(error);
     }
   }
+
+  // 立即购买商品
+
+  // 加入购物袋
+  async addProductToCart(req, res, next) {
+    const locale = req.locale || 'zh-CN';
+
+    const { productId, quantity } = req.body;
+
+    // 参数校验
+    // if (!productId || !quantity || isNaN(parseInt(productId)) || isNaN(parseInt(quantity))) {
+    //   return res.json(Result.fail(
+    //     t('INVALID_PARAMS', locale),
+    //     'INVALID_PARAMS',
+    //     null,
+    //     [
+    //       { field: 'productId', msg: t('PARAM_REQUIRED', locale) },
+    //       { field: 'quantity', msg: t('PARAM_REQUIRED', locale) },
+    //       { field: 'productId', msg: t('PRODUCT_ID_MUST_BE_NUMBER', locale) },
+    //     ],
+    //     locale
+    //   ))
+    // }
+  }
 }
 
 module.exports = new ProductController();

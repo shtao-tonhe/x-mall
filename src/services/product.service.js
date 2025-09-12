@@ -2,6 +2,43 @@
 const prisma = global.prisma;
 
 class ProductService {
+  /**
+   * 批量获取商品（用于下单校验）
+   * @param {Array} productIds - 商品ID数组
+   * @returns {Promise<Object>} 商品Map对象，key为商品ID，value为商品详细信息
+   */
+  async getProductsForOrder(productIds) {
+    console.log("查询商品--getProductsForOrder");
+
+    // 查询数据库，获取商品详情
+    const products = await prisma.pms_product.findMany({
+      where: {
+        id: { in: productIds },
+      },
+      select: {
+        id: true,
+      }
+    });
+
+    if (products.length === 0) {
+      throw new Error('未找到有效产品');
+    }
+
+    // 将查询结果转换为Map，便于快速查找
+    const productMap = {};
+    products.forEach(product => {
+      productMap[product.id] = {
+        id: product.id,
+        name: product.name,
+        price: product.price,     // 数据库中的真实价格
+        stock: product.stock,
+        image: product.image
+      };
+    });
+
+    return productMap;
+  }
+
   // 获取商品详情
   async getProductById(productId) {
     return await prisma.pms_product.findUnique({

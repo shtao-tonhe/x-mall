@@ -9,3 +9,5 @@ router.use(detectLocale);
 
 // 订单-创建
 router.post('/created', orderController.createOrder);
+
+module.exports = router;
